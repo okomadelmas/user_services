@@ -1,0 +1,36 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+  http_listen_address: 0.0.0.0
+  grpc_listen_address: 0.0.0.0
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 1
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+
+memberlist:
+  abort_if_cluster_join_fails: false
+  bind_port: 7946
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: []

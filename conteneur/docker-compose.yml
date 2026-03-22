@@ -1,0 +1,87 @@
+services:
+
+  spring-app:
+    image: user_services:1.0.1
+    container_name: user_services
+    ports:
+      - "8080:8080"
+    environment:
+      - OTEL_SERVICE_NAME=user_services
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - LOG_PATH=/app/logs
+    depends_on:
+      - tempo
+    volumes:
+      - user-services-logs:/app/logs
+    networks:
+      - observability
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    ports:
+      - "4317:4317" #OTLP gRPC
+      - "4318:4318" #OTLP HTTP
+      - "3200:3200" #Tempo HTTP API
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./tempo.yml:/etc/tempo.yml
+      - tempo-data:/var/tempo
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - observability
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail.yml:/etc/promtail/promtail.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - user-services-logs:/app/logs
+    depends_on:
+      - loki
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - observability
+
+volumes:
+  grafana-data:
+  tempo-data:
+  user-services-logs:
+networks:
+  observability:
+
