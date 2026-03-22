@@ -1,0 +1,34 @@
+- Nombre de distinct endpoint appelé en fonction du nombre total d'endpoint du microservices
+    Au niveau du métrique browser en mode code
+        count(
+            count by (uri, method) (
+                increase(http_server_requests_seconds_count{application="user_services", uri!="/actuator/prometheus"}[$__range]) > 0
+            )
+        )
+    Choix du type de visualisation : Gauge
+    paramétrage :
+        * Standard Option : min, max
+        * Gauge : 
+            Show threshold labels : true (affiche la graduation)
+            Show threshold markers : false (supprimer le border extérieur)
+        * thresholds (pour définir la couleur des seuils)
+
+
+
+- Nombre total d'appel par endpoint
+    Au niveau du métrique browser en mode code
+        round(
+            sum by(method, uri) (
+                increase(http_server_requests_seconds_count{
+                application="user_services",
+                uri!="/actuator/prometheus"
+                }[$__range])
+            )
+            )
+    Transformation vue TABLE
+        * Labels to fields = Cela va transformer les labels Prometheus en colonnes.
+        * Merge series/tables = Cette transformation fusionne toutes les séries Prometheus en une seule table.
+        * Filter fields by name = filtrer les colonnes à afficher
+        * Group by = 
+        * Organize fields = Renommer les colonnes
+        * Sort by → appels → Descending

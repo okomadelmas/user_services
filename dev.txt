@@ -1,0 +1,11 @@
+#### Cibler des versions au niveayx des images
+
+##########################################
+#### Configuration de la base de données
+##########################################
+
+CREATE USER delmas WITH PASSWORD 'delmasadmin';
+ALTER USER delmas CREATEDB;
+
+CREATE DATABASE user_services OWNER delmas;
+GRANT ALL PRIVILEGES ON DATABASE user_services TO delmas;
